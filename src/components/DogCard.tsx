@@ -1,4 +1,4 @@
-import { Dog } from "@/types/dog";
+import { Dog } from "@/types";
 import FavoriteButton from "./FavoriteButton";
 
 interface DogCardProps {

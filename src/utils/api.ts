@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Dog, MatchResponse, SearchFilters } from "../types";
 
 const API_BASE_URL = "https://frontend-take-home-service.fetch.com";
 
@@ -22,10 +23,9 @@ api.interceptors.response.use(
 );
 
 // Login API
-export const loginUser = async (name: string, email: string) => {
+export const loginUser = async (name: string, email: string): Promise<void> => {
   try {
-    const response = await api.post("/auth/login", { name, email });
-    return response.data;
+    await api.post("/auth/login", { name, email });
   } catch (error) {
     console.error("Login failed:", error);
     throw new Error("Login failed");
@@ -33,7 +33,7 @@ export const loginUser = async (name: string, email: string) => {
 };
 
 // Logout API
-export const logoutUser = async () => {
+export const logoutUser = async (): Promise<void> => {
   try {
     await api.post("/auth/logout");
   } catch (error) {
@@ -43,9 +43,9 @@ export const logoutUser = async () => {
 };
 
 // Fetch dog breeds
-export const fetchBreeds = async () => {
+export const fetchBreeds = async (): Promise<string[]> => {
   try {
-    const response = await api.get("/dogs/breeds");
+    const response = await api.get<string[]>("/dogs/breeds");
     return response.data;
   } catch (error) {
     console.error("Failed to fetch breeds:", error);
@@ -54,9 +54,9 @@ export const fetchBreeds = async () => {
 };
 
 // Fetch dogs by search filters (returns both result IDs & next page URL)
-export const fetchDogs = async (filters: Record<string, any>) => {
+export const fetchDogs = async (filters: SearchFilters): Promise<{ resultIds: string[]; next: string, prev:string }> => {
   try {
-    const response = await api.get("/dogs/search", { params: filters });
+    const response = await api.get<{ resultIds: string[]; next: string; prev: string }>("/dogs/search", { params: filters });
     return response.data;
   } catch (error) {
     console.error("Failed to fetch dog IDs:", error);
@@ -65,9 +65,9 @@ export const fetchDogs = async (filters: Record<string, any>) => {
 };
 
 // Fetch previous page of dogs
-export const fetchPrevDogs = async (prevUrl: string, filters: Record<string, any>) => {
+export const fetchPrevDogs = async (prevUrl: string, filters: SearchFilters): Promise<{ resultIds: string[]; next: string; prev:string }> => {
   try {
-    const response = await api.get(prevUrl.replace(API_BASE_URL, ""), { params: filters });
+    const response = await api.get<{ resultIds: string[]; next: string; prev: string }>(prevUrl.replace(API_BASE_URL, ""), { params: filters });
     return response.data;
   } catch (error) {
     console.error("Failed to fetch previous page of dogs:", error);
@@ -76,9 +76,9 @@ export const fetchPrevDogs = async (prevUrl: string, filters: Record<string, any
 };
 
 // Fetch next page of dogs
-export const fetchNextDogs = async (nextUrl: string, filters: Record<string, any>) => {
+export const fetchNextDogs = async (nextUrl: string, filters: SearchFilters): Promise<{ resultIds: string[]; next: string; prev: string }> => {
   try {
-    const response = await api.get(nextUrl.replace(API_BASE_URL, ""), { params: filters });
+    const response = await api.get<{ resultIds: string[]; next: string; prev: string }>(nextUrl.replace(API_BASE_URL, ""), { params: filters });
     return response.data;
   } catch (error) {
     console.error("Failed to fetch next page of dogs:", error);
@@ -87,9 +87,9 @@ export const fetchNextDogs = async (nextUrl: string, filters: Record<string, any
 };
 
 // Fetch dog details for multiple dogs by IDs
-export const fetchDogsDetailsByIds = async (dogIds: string[]) => {
+export const fetchDogsDetailsByIds = async (dogIds: string[]): Promise<Dog[]> => {
   try {
-    const response = await api.post("/dogs", dogIds);
+    const response = await api.post<Dog[]>("/dogs", dogIds);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch dog details:", error);
@@ -98,13 +98,12 @@ export const fetchDogsDetailsByIds = async (dogIds: string[]) => {
 };
 
 // Fetch match based on user's favorite dogs
-export const fetchMatch = async (favorites: string[]) => {
+export const fetchMatch = async (favorites: string[]): Promise<MatchResponse> => {
   try {
-    const response = await api.post("/dogs/match", favorites);
-    return response.data as { data: any; match: string };
+    const response = await api.post<MatchResponse>("/dogs/match", favorites);
+    return response.data;
   } catch (error) {
     console.error("Failed to fetch match:", error);
     throw new Error("Failed to fetch match");
   }
 };
-

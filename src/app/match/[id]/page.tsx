@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchDogs } from "@/utils/api";
 import { useParams } from "next/navigation";
-import { Dog } from "@/types/dog";
+import { Dog } from "@/types";
 
 export default function MatchPage() {
     const { id } = useParams();

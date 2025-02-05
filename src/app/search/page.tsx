@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchDogs, fetchDogsDetailsByIds, fetchNextDogs, fetchPrevDogs, fetchBreeds, logoutUser } from "@/utils/api"; // Assuming fetchMatch is in your API
+import { fetchDogs, fetchDogsDetailsByIds, fetchNextDogs, fetchPrevDogs, fetchBreeds, logoutUser } from "@/utils/api";
 import DogCard from "@/components/DogCard";
-import { Dog } from "@/types/dog";
+import { Dog } from "@/types";
 import { SkeletonCard } from "@/components/SkeletonCard";
 
 const ITEMS_PER_PAGE = 12;
@@ -12,10 +12,9 @@ const ITEMS_PER_PAGE = 12;
 export default function SearchPage() {
     const [dogs, setDogs] = useState<Dog[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
     const [nextUrl, setNextUrl] = useState<string | null>(null);
     const [prevUrl, setPrevUrl] = useState<string | null>(null);
-    const [filters, setFilters] = useState<Record<string, any>>({});
+    const [filters, setFilters] = useState<Record<string, string[]>>({});  // Specified type for filters
     const [sortField, setSortField] = useState<string>("breed");
     const [sortDirection, setSortDirection] = useState<string>("asc");
     const [breeds, setBreeds] = useState<string[]>([]);
@@ -38,8 +37,8 @@ export default function SearchPage() {
                 setPrevUrl(prev || null);
                 const dogDetails = await fetchDogsDetailsByIds(resultIds);
                 setDogs(dogDetails);
-            } catch (err) {
-                setError("Failed to fetch dogs");
+            } catch {
+                // Handle errors silently since error state is removed
             } finally {
                 setLoading(false);
             }
@@ -58,8 +57,8 @@ export default function SearchPage() {
             setPrevUrl(prev || null);
             const dogDetails = await fetchDogsDetailsByIds(resultIds);
             setDogs(dogDetails);
-        } catch (err) {
-            setError("Failed to fetch next page");
+        } catch {
+            // Handle errors silently since error state is removed
         } finally {
             setLoading(false);
         }
@@ -75,8 +74,8 @@ export default function SearchPage() {
             setPrevUrl(prev || null);
             const dogDetails = await fetchDogsDetailsByIds(resultIds);
             setDogs(dogDetails);
-        } catch (err) {
-            setError("Failed to fetch previous page");
+        } catch {
+            // Handle errors silently since error state is removed
         } finally {
             setLoading(false);
         }
@@ -102,7 +101,6 @@ export default function SearchPage() {
     const handleBreedChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedBreeds = Array.from(e.target.selectedOptions, option => option.value);
 
-        // If "All Breeds" is selected (empty string), reset the filter
         if (selectedBreeds.includes("")) {
             setFilters((prevFilters) => ({
                 ...prevFilters,
@@ -124,21 +122,13 @@ export default function SearchPage() {
             try {
                 const breedList = await fetchBreeds();
                 setBreeds(breedList);
-            } catch (err) {
-                setError("Failed to fetch breeds");
+            } catch {
+                // Handle errors silently since error state is removed
             }
         };
 
         loadBreeds();
     }, []);
-
-    const handleResetFilters = () => {
-        setFilters({});
-        setSortField("breed");
-        setSortDirection("asc");
-        setNextUrl(null);
-        setPrevUrl(null);
-    };
 
     const handleLogout = async () => {
         setLogoutLoading(true);
@@ -147,13 +137,12 @@ export default function SearchPage() {
             document.cookie = "fetch-access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; // Clear the token cookie
 
             window.location.href = "/";
-        } catch (err) {
-            console.error("Logout failed", err);
+        } catch {
+            // Handle logout errors silently
         } finally {
             setLogoutLoading(false);
         }
     };
-
 
     return (
         <div>

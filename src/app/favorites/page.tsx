@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Dog } from "@/types/dog";
+import { Dog } from "@/types";
 import DogCard from "@/components/DogCard";
 import { fetchDogsDetailsByIds, fetchMatch } from "@/utils/api";
 import Link from "next/link";
@@ -10,7 +10,6 @@ import { SkeletonCard } from "@/components/SkeletonCard";
 const Modal = ({ dog, onClose }: { dog: Dog; onClose: () => void }) => {
     const modalRef = useRef<HTMLDivElement>(null);
 
-    // Close modal if clicked outside the modal container
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -19,7 +18,6 @@ const Modal = ({ dog, onClose }: { dog: Dog; onClose: () => void }) => {
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
@@ -50,27 +48,23 @@ const Modal = ({ dog, onClose }: { dog: Dog; onClose: () => void }) => {
 export default function FavoritesPage() {
     const [favoriteDogs, setFavoriteDogs] = useState<Dog[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
     const [match, setMatch] = useState<Dog | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        // Retrieve the user email from sessionStorage
         const userEmail = sessionStorage.getItem("userEmail");
 
         if (userEmail) {
-            // Retrieve the favorite dog IDs corresponding to the logged-in user
             const favorites = JSON.parse(sessionStorage.getItem(userEmail) || "[]");
 
             if (favorites.length > 0) {
-                // Fetch dog details for each favorite ID using the API
                 const fetchDogDetails = async () => {
                     try {
                         const dogDetails = await fetchDogsDetailsByIds(favorites);
                         setFavoriteDogs(dogDetails);
-                        setLoading(false);
                     } catch (err) {
-                        setError("Failed to fetch favorite dogs.");
+                        console.error("Failed to fetch favorite dogs:", err);
+                    } finally {
                         setLoading(false);
                     }
                 };
@@ -81,11 +75,10 @@ export default function FavoritesPage() {
             }
         } else {
             setLoading(false);
-            setError("User is not logged in.");
+            console.error("User is not logged in.");
         }
     }, []);
 
-    // handleGenerateMatch function
     const handleGenerateMatch = async () => {
         const userEmail = sessionStorage.getItem("userEmail");
 
@@ -109,9 +102,8 @@ export default function FavoritesPage() {
                 const matchedDogDetails = await fetchDogsDetailsByIds([matchedDogId]);
 
                 if (matchedDogDetails.length > 0) {
-                    const matchedDog = matchedDogDetails[0];
-                    setMatch(matchedDog);
-                    setIsModalOpen(true); // Open modal on match
+                    setMatch(matchedDogDetails[0]);
+                    setIsModalOpen(true);
                 } else {
                     alert("No match details found");
                 }
@@ -119,6 +111,7 @@ export default function FavoritesPage() {
                 alert("No match found");
             }
         } catch (err) {
+            console.error("Failed to generate match:", err);
             alert("Failed to generate match");
         }
     };
@@ -137,7 +130,9 @@ export default function FavoritesPage() {
                         Back to Search
                     </div>
                 </Link>
-                <h1 className="text-3xl font-bold absolute left-1/2 transform -translate-x-1/2">Favorites</h1>
+                <h1 className="text-3xl font-bold absolute left-1/2 transform -translate-x-1/2">
+                    Favorites
+                </h1>
             </div>
 
             <div className="flex justify-center mb-6">
@@ -149,18 +144,14 @@ export default function FavoritesPage() {
                 </button>
             </div>
 
-            {isModalOpen && match && (
-                <Modal dog={match} onClose={closeModal} />
-            )}
+            {isModalOpen && match && <Modal dog={match} onClose={closeModal} />}
 
             <div
                 className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6 pl-12 ${isModalOpen ? "blur-sm pointer-events-none" : ""
                     }`}
             >
                 {loading ? (
-                    Array.from({ length: 12 }).map((_, index) => (
-                        <SkeletonCard key={index} />
-                    ))
+                    Array.from({ length: 12 }).map((_, index) => <SkeletonCard key={index} />)
                 ) : favoriteDogs.length > 0 ? (
                     favoriteDogs.map((dog) => <DogCard key={dog.id} dog={dog} />)
                 ) : (
